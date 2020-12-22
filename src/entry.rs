@@ -1,5 +1,7 @@
 use crate::constants;
 use anyhow::{ensure, Result};
+use byteorder::{ByteOrder, LittleEndian, NativeEndian};
+use std::{convert::TryInto, u32};
 
 #[derive(Debug)]
 pub(crate) struct Entry {
@@ -42,9 +44,6 @@ impl Header {
 		})
 	}
 }
-
-use byteorder::{ByteOrder, LittleEndian, NativeEndian};
-use std::{convert::TryInto, u32};
 
 #[derive(Debug)]
 pub(crate) struct Guid {
