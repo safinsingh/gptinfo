@@ -1,7 +1,10 @@
-use crate::{constants, guid::get_str_from_ty_uuid, partition::Partition};
-use anyhow::{ensure, Context as _, Result};
-use byteorder::{NativeEndian, ReadBytesExt};
-use std::{fs::File, io::Cursor, os::unix::fs::FileExt, str};
+use crate::{
+	constants,
+	entry::{Entry, Header, Partition},
+	guid::get_str_from_ty_uuid,
+};
+use anyhow::{Context as _, Result};
+use std::{fs::File, os::unix::fs::FileExt, str};
 
 fn read_block_at_offset<'a>(
 	location: &'a str,
@@ -18,58 +21,6 @@ fn read_block_at_offset<'a>(
 		})?;
 
 	Ok(slice)
-}
-
-#[derive(Debug)]
-pub(crate) struct Entry {
-	pub(crate) ty: String,
-	pub(crate) start: u64,
-	pub(crate) end: u64,
-}
-
-impl Entry {
-	fn new(ty: String, start: u64, end: u64) -> Entry {
-		Self { ty, start, end }
-	}
-}
-
-#[derive(Debug)]
-struct Header {
-	first_usable_lba: u64,
-	last_usable_lba: u64,
-}
-
-impl Header {
-	fn from(slice: &[u8]) -> Result<Self> {
-		let mut cursor = Cursor::new(slice);
-
-		// GPT signature is in the first 8 bytes of the header
-		let signature = cursor
-			.read_u64::<NativeEndian>()
-			.context("Failed to read GPT Header Signature from slice")?;
-
-		ensure!(
-			signature == constants::GPT_HEADER_SIG,
-			"Failed to verify GPT Signature"
-		);
-
-		// First usable LBA is at a 40-byte offset and is 8 bytes in length
-		cursor.set_position(40);
-		let first_usable_lba = cursor
-			.read_u64::<NativeEndian>()
-			.context("Failed to read first usable LBA from slice")?;
-
-		// Last usable LBA is at a 48-byte offset and is 8 bytes in length
-		cursor.set_position(48);
-		let last_usable_lba = cursor
-			.read_u64::<NativeEndian>()
-			.context("Failed to read first usable LBA from slice")?;
-
-		Ok(Self {
-			first_usable_lba,
-			last_usable_lba,
-		})
-	}
 }
 
 pub(crate) fn analyze(location: &str) -> Result<Vec<Entry>> {
@@ -95,7 +46,7 @@ fn analyze_lba(
 			let mut bytes = [0u8; 512];
 			read_block_at_offset(location, &mut bytes, constants::MBR_OFFSET)?;
 
-			let header = Header::from(&bytes)?;
+			let header = Header::from(bytes)?;
 			let name = format!("Block device ({})", location);
 
 			entries.push(Entry::new(

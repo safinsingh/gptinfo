@@ -1,8 +1,8 @@
 mod cli;
 mod constants;
+mod entry;
 mod fmt;
 mod guid;
-mod partition;
 mod reader;
 mod table;
 

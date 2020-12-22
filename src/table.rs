@@ -1,4 +1,4 @@
-use crate::{fmt::convert as prettify_bytes, reader::Entry};
+use crate::{entry::Entry, fmt::convert as prettify_bytes};
 use anyhow::Result;
 use std::{io::Write, iter::FromIterator};
 
@@ -43,13 +43,7 @@ impl Table {
 
 		// Calculate maximum widths for each column
 		for (idx, cell) in self.cells.iter().enumerate() {
-			let col = {
-				if idx == self.columns - 1 {
-					idx
-				} else {
-					idx % self.columns
-				}
-			};
+			let col = self.get_cell_coll(idx);
 
 			if widths[col] < cell.len() {
 				widths[col] = cell.len() + 1
@@ -84,13 +78,7 @@ impl Table {
 				writeln!(writer)?;
 			}
 
-			let col = {
-				if idx == self.columns - 1 {
-					idx
-				} else {
-					idx % self.columns
-				}
-			};
+			let col = self.get_cell_coll(idx);
 
 			write!(writer, "│ {}", cell)?;
 			for _ in 0..(widths[col] - cell.len()) {
@@ -114,5 +102,13 @@ impl Table {
 		writeln!(writer, "╯")?;
 
 		Ok(())
+	}
+
+	fn get_cell_coll(&self, idx: usize) -> usize {
+		if idx == self.columns - 1 {
+			idx
+		} else {
+			idx % self.columns
+		}
 	}
 }

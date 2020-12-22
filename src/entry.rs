@@ -1,3 +1,48 @@
+use crate::constants;
+use anyhow::{ensure, Result};
+
+#[derive(Debug)]
+pub(crate) struct Entry {
+	pub(crate) ty: String,
+	pub(crate) start: u64,
+	pub(crate) end: u64,
+}
+
+impl Entry {
+	pub(crate) fn new(ty: String, start: u64, end: u64) -> Entry {
+		Self { ty, start, end }
+	}
+}
+
+#[derive(Debug)]
+pub(crate) struct Header {
+	pub(crate) first_usable_lba: u64,
+	pub(crate) last_usable_lba: u64,
+}
+
+impl Header {
+	pub(crate) fn from(slice: [u8; 512]) -> Result<Self> {
+		// GPT signature is in the first 8 bytes of the header
+		let signature = NativeEndian::read_u64(&slice[0..8]);
+
+		ensure!(
+			signature == constants::GPT_HEADER_SIG,
+			"Failed to verify GPT Signature"
+		);
+
+		// First usable LBA is at a 40-byte offset and is 8 bytes in length
+		let first_usable_lba = NativeEndian::read_u64(&slice[40..48]);
+
+		// Last usable LBA is at a 48-byte offset and is 8 bytes in length
+		let last_usable_lba = NativeEndian::read_u64(&slice[48..56]);
+
+		Ok(Self {
+			first_usable_lba,
+			last_usable_lba,
+		})
+	}
+}
+
 use byteorder::{ByteOrder, LittleEndian, NativeEndian};
 use std::{convert::TryInto, u32};
 
