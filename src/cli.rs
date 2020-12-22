@@ -18,7 +18,7 @@ pub(crate) fn parse<I>(mut iter: I) -> Result<()>
 where
 	I: Iterator<Item = String>,
 {
-	Ok(if let Some(arg) = iter.nth(1) {
+	if let Some(arg) = iter.nth(1) {
 		match arg.as_str() {
 			"-v" | "--version" => {
 				println!("gptinfo {}", VERSION);
@@ -31,5 +31,7 @@ where
 		}
 	} else {
 		run(None)?;
-	})
+	};
+
+	Ok(())
 }

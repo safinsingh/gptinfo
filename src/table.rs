@@ -62,7 +62,7 @@ impl<'a> Table {
 				print!("┬");
 			}
 		}
-		print!("╮\n");
+		println!("╮");
 
 		for (idx, cell) in self.cells.iter().enumerate() {
 			// Print separator after first row
@@ -78,7 +78,7 @@ impl<'a> Table {
 						print!("┤");
 					}
 				}
-				print!("\n");
+				println!();
 			}
 
 			let col = {
@@ -95,7 +95,7 @@ impl<'a> Table {
 			}
 
 			if col == self.columns - 1 {
-				print!("│\n");
+				println!("│");
 			}
 		}
 

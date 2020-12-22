@@ -44,7 +44,7 @@ impl<'a> Reader<'a> {
 	}
 
 	fn analyze_lba(&mut self, lba: u64) -> Result<()> {
-		Ok(match lba {
+		match lba {
 			// The zero-th LBA is the protective MBR. Because we don't need to
 			// look over this, we can skip over to the next LBA, which is the
 			// Primary GPT Header
@@ -58,8 +58,7 @@ impl<'a> Reader<'a> {
 				)?;
 
 				let header = Header::from(&bytes)?;
-				let loc = self.location.clone();
-				let name = format!("Block device ({})", loc);
+				let name = format!("Block device ({})", self.location);
 
 				self.entries.push(Entry::new(
 					name,
@@ -89,6 +88,7 @@ impl<'a> Reader<'a> {
 				}
 			}
 			_ => unreachable!(),
-		})
+		};
+		Ok(())
 	}
 }
