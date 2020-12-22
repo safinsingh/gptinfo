@@ -1,26 +1,25 @@
-use crate::{entry::Entry, fmt::format_bytes};
+use crate::{fmt::convert as prettify_bytes, reader::Entry};
+use anyhow::Result;
+use std::{io::Write, iter::FromIterator};
 
 pub(crate) struct Table {
 	columns: usize,
 	cells: Vec<String>,
 }
 
-impl<'a> Table {
-	pub(crate) fn from<I>(iter: I) -> Table
-	where
-		I: Iterator<Item = Entry>,
-	{
+impl FromIterator<Entry> for Table {
+	fn from_iter<T: IntoIterator<Item = Entry>>(iter: T) -> Self {
 		let mut new = Self {
 			columns: 5,
-			cells: Vec::new(),
+			cells: vec![
+				// Table labels
+				String::from("Start"),
+				String::from("End"),
+				String::from("Sectors"),
+				String::from("Size"),
+				String::from("Type"),
+			],
 		};
-
-		// Table labels
-		new.cells.push("Start".into());
-		new.cells.push("End".into());
-		new.cells.push("Sectors".into());
-		new.cells.push("Size".into());
-		new.cells.push("Type".into());
 
 		for entry in iter {
 			new.cells.push(entry.start.to_string());
@@ -28,14 +27,18 @@ impl<'a> Table {
 			// The number of sectors is the total number of LBAs between the
 			// upper and lower bounds of the partition
 			new.cells.push((entry.end - entry.start + 1).to_string());
-			new.cells.push(format_bytes(entry.end, entry.start));
+			new.cells.push(prettify_bytes(
+				((entry.end - entry.start + 1) * 512) as f64,
+			));
 			new.cells.push(entry.ty.to_string());
 		}
 
 		new
 	}
+}
 
-	pub(crate) fn render(&self) {
+impl Table {
+	pub(crate) fn render<W: Write>(&self, mut writer: W) -> Result<()> {
 		let mut widths = vec![0usize; self.columns];
 
 		// Calculate maximum widths for each column
@@ -53,32 +56,32 @@ impl<'a> Table {
 			}
 		}
 
-		print!("╭");
+		write!(writer, "╭")?;
 		for (col, row_width) in widths.iter().enumerate() {
 			for _ in 0..*row_width + 1 {
-				print!("─")
+				write!(writer, "─")?;
 			}
 			if col != self.columns - 1 {
-				print!("┬");
+				write!(writer, "┬")?;
 			}
 		}
-		println!("╮");
+		writeln!(writer, "╮")?;
 
 		for (idx, cell) in self.cells.iter().enumerate() {
 			// Print separator after first row
 			if idx == self.columns {
-				print!("├");
+				write!(writer, "├")?;
 				for (idx, len) in widths.iter().enumerate() {
 					for _ in 0..*len + 1 {
-						print!("─")
+						write!(writer, "─")?;
 					}
 					if idx != self.columns - 1 {
-						print!("┼")
+						write!(writer, "┼")?;
 					} else {
-						print!("┤");
+						write!(writer, "┤")?;
 					}
 				}
-				println!();
+				writeln!(writer)?;
 			}
 
 			let col = {
@@ -89,25 +92,27 @@ impl<'a> Table {
 				}
 			};
 
-			print!("│ {}", cell);
+			write!(writer, "│ {}", cell)?;
 			for _ in 0..(widths[col] - cell.len()) {
-				print!(" ");
+				write!(writer, " ")?;
 			}
 
 			if col == self.columns - 1 {
-				println!("│");
+				writeln!(writer, "│")?;
 			}
 		}
 
-		print!("╰");
+		write!(writer, "╰")?;
 		for (col, row_width) in widths.iter().enumerate() {
 			for _ in 0..*row_width + 1 {
-				print!("─")
+				write!(writer, "─")?;
 			}
 			if col != self.columns - 1 {
-				print!("┴");
+				write!(writer, "┴")?;
 			}
 		}
-		println!("╯");
+		writeln!(writer, "╯")?;
+
+		Ok(())
 	}
 }

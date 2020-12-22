@@ -1,4 +1,10 @@
+use std::env;
+
 fn main() {
-	#[cfg(not(unix))]
-	compile_error!("This crate cannot be compiled on non-Unix-based systems!");
+	if !env::var("TARGET")
+		.unwrap_or_default()
+		.ends_with("linux-gnu")
+	{
+		panic!("This crate cannot be compiled on non-Unix-based systems!");
+	}
 }

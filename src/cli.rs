@@ -1,16 +1,16 @@
 use crate::{
-	constants::{HELP_MSG, VERSION},
-	reader::Reader,
+	constants::{get_help_msg, DEFAULT_BLOCK_DEVICE, VERSION},
+	reader,
 	table::Table,
 };
 use anyhow::Result;
+use std::io;
 
-pub(crate) fn run(location: Option<&str>) -> Result<()> {
-	let reader = Reader::new(location.unwrap_or("/dev/sda"));
-	let entries = reader.analyze()?;
-	let table = Table::from(entries.into_iter());
+pub(crate) fn run(location: &str) -> Result<()> {
+	let entries = reader::analyze(location)?;
+	let table = entries.into_iter().collect::<Table>();
 
-	table.render();
+	table.render(io::stdout().lock())?;
 	Ok(())
 }
 
@@ -24,13 +24,13 @@ where
 				println!("gptinfo {}", VERSION);
 			}
 			"-h" | "--help" => {
-				println!("{}", HELP_MSG);
+				println!("{}", get_help_msg());
 			}
-			"" => run(None)?,
-			loc => run(Some(loc))?,
+			"" => run(DEFAULT_BLOCK_DEVICE)?,
+			loc => run(loc)?,
 		}
 	} else {
-		run(None)?;
+		run(DEFAULT_BLOCK_DEVICE)?;
 	};
 
 	Ok(())

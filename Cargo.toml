@@ -2,7 +2,7 @@
 authors = ["Safin Singh <safinsingh.dev@gmail.com>"]
 edition = "2018"
 name = "gptinfo"
-version = "2.0.0"
+version = "2.1.0"
 license = "MPL-2.0"
 description = "A CLI tool to analyze partition tables"
 repository = "https://github.com/safinsingh/gptinfo"
@@ -12,3 +12,4 @@ keywords = ["gpt", "partition-tables"]
 [dependencies]
 anyhow = "1.0.36"
 byteorder = "1.3.4"
+const_format = "0.2.10"

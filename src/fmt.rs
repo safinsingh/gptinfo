@@ -1,26 +1,27 @@
-pub(crate) fn format_bytes(end: u64, start: u64) -> String {
-	let raw = (end - start + 1) * 512;
-	match raw {
-		// 1024 bytes in a MB
-		1..=1023 => {
-			format!("{}B", raw)
-		}
-		// 1048576 bytes in a KB
-		1024..=1048575 => {
-			format!("{}K", raw / 1024)
-		}
-		// 1073741824 bytes in a GB
-		1048576..=1073741823 => {
-			format!("{}M", raw / 1024 / 1024)
-		}
-		// 1099511627776 bytes in a TB
-		1073741824..=1099511627775 => {
-			format!("{}G", raw / 1024 / 1024 / 1024)
-		}
-		// 1125899906842624 bytes in a PB
-		1099511627776..=1125899906842624 => {
-			format!("{}T", raw / 1024 / 1024 / 1024 / 1024)
-		}
-		_ => panic!("Partition size exceeds 1023T and cannot be displayed!"),
+use std::cmp;
+
+// Taken from https://github.com/banyan/rust-pretty-bytes/blob/master/src/converter.rs,
+// but uses a delimeter of 1024 instead of 1000
+pub(crate) fn convert(num: f64) -> String {
+	let negative = if num.is_sign_positive() { "" } else { "-" };
+	let num = num.abs();
+
+	let units = ["B", "kB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"];
+	if num < 1_f64 {
+		return format!("{}{} {}", negative, num, "B");
 	}
+
+	let delimiter = 1024_f64;
+	let exponent = cmp::min(
+		(num.ln() / delimiter.ln()).floor() as i32,
+		(units.len() - 1) as i32,
+	);
+
+	let pretty_bytes = format!("{:.2}", num / delimiter.powi(exponent))
+		.parse::<f64>()
+		.unwrap()
+		* 1_f64;
+	let unit = units[exponent as usize];
+
+	format!("{}{} {}", negative, pretty_bytes, unit)
 }
