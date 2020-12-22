@@ -29,5 +29,7 @@ where
 			"" => run(None)?,
 			loc => run(Some(loc))?,
 		}
+	} else {
+		run(None)?;
 	})
 }
