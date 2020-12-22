@@ -5,6 +5,6 @@ fn main() {
 		.unwrap_or_default()
 		.ends_with("linux-gnu")
 	{
-		panic!("This crate cannot be compiled on non-Unix-based systems!");
+		panic!("This crate cannot be compiled for non-Unix-based targets!");
 	}
 }
